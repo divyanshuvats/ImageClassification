@@ -7,7 +7,7 @@ library(keras)
 library(jsonlite)
 
 # Set Working Directory for Training Images:
-setwd("C:/Users/Divyanshu Vats/Documents/JBM/Train/training")
+setwd("-------PATH FOR TRAINING DATA-----------")
 
 # Read Images:
 pic1  <- list.files()
@@ -15,7 +15,7 @@ train <- list()
 for (i in 1:length(pic1)) {train[[i]] <- readImage(pic1[i])}
 
 # Set Working Directory for Training Images:
-setwd("C:/Users/Divyanshu Vats/Documents/JBM/Train/testing")
+setwd("-------PATH FOR TESTING DATA-----------")
 
 # Read the Test Images
 test <- list()
@@ -49,7 +49,7 @@ str(train)
 str(test)
 
 # Set Working Directory for Remaining Operations.
-setwd("C:/Users/Divyanshu Vats/Documents/JBM/Train")
+setwd("-------PATH FOR VALIDATION DATA-----------")
 
 # Reading the label files:
 label_train <- read.csv("Labels_Train.csv", header = F)
@@ -153,13 +153,4 @@ str(test)
 
 #v Predict the class of the images
 pred <- model %>% predict_classes(test)
-
-# Increment the class by 1 
-
-pred <- pred + 1
-
-for(i in 1:length(pred))
-{
-  switch(pred[i], )
-  print(pred[i])
-}
+pred
