@@ -1,0 +1,165 @@
+# This code develops a CNN to classify the image entered in the model into class of damage.
+
+
+# Load Packages
+library(EBImage)
+library(keras)
+library(jsonlite)
+
+# Set Working Directory for Training Images:
+setwd("C:/Users/Divyanshu Vats/Documents/JBM/Train/training")
+
+# Read Images:
+pic1  <- list.files()
+train <- list()
+for (i in 1:length(pic1)) {train[[i]] <- readImage(pic1[i])}
+
+# Set Working Directory for Training Images:
+setwd("C:/Users/Divyanshu Vats/Documents/JBM/Train/testing")
+
+# Read the Test Images
+test <- list()
+pic2 <- list.files()
+for (i in 1:length(pic2)) {test[[i]] <- readImage(pic2[i])}
+
+#Resize & combine
+str(train)
+for (i in 1:length(train)) {train[[i]] <- resize(train[[i]], 100, 100)}
+for (i in 1:length(test))  {test[[i]]  <- resize(test[[i]],  100, 100)}
+
+
+# Since, CNNs require data in a particular format,
+# we need to combine the test and train data into one frame.
+train <- combine(train)
+x <- tile(train,10)
+display(x, title='Pictures')
+str(train)
+
+# Similarly for the test data.
+test <- combine(test)
+y <- tile(test, 6)
+display(y, title = 'Pics')
+
+# Reorder dimension.
+train <- aperm(train, c(4, 1, 2, 3))
+test  <- aperm(test,  c(4, 1, 2, 3))
+
+# Check the structure of testing and training data
+str(train)
+str(test)
+
+# Set Working Directory for Remaining Operations.
+setwd("C:/Users/Divyanshu Vats/Documents/JBM/Train")
+
+# Reading the label files:
+label_train <- read.csv("Labels_Train.csv", header = F)
+label_test  <- read.csv("Labels_Test.csv",  header = F)
+
+
+# Assign the labels to trainy and testy.
+trainy <- label_train$V1
+testy  <- label_test$V1
+
+# One Hot Encoding.
+trainLabels <- to_categorical(trainy)
+testLabels  <- to_categorical(testy)
+
+# Model Creation
+model <- keras_model_sequential()
+
+model %>%
+  layer_conv_2d(filters = 32, 
+                kernel_size = c(2,2),
+                activation = 'relu',
+                input_shape = c(100, 100, 3)) %>%
+  layer_conv_2d(filters = 32,
+                kernel_size = c(2,2),
+                activation = 'relu') %>%
+  layer_max_pooling_2d(pool_size = c(2,2)) %>%
+  layer_dropout(rate = 0.20) %>%
+  layer_conv_2d(filters = 64,
+                kernel_size = c(2,2),
+                activation = 'relu') %>%
+  layer_conv_2d(filters = 64,
+                kernel_size = c(2,2),
+                activation = 'relu') %>%
+  layer_max_pooling_2d(pool_size = c(2,2)) %>%
+  layer_dropout(rate = 0.25) %>%
+  layer_flatten() %>%
+  layer_dense(units = 256, activation = 'relu') %>%
+  layer_dropout(rate=0.20) %>%
+  layer_dense(units = 6, activation = 'softmax') %>%
+  
+  compile(loss = 'categorical_crossentropy',
+          optimizer = optimizer_sgd(lr = 0.01,
+                                    decay = 1e-6,
+                                    momentum = 0.9,
+                                    nesterov = T),
+          metrics = c('accuracy'))
+summary(model)
+
+# Fit model.
+history <- model %>%
+  fit(train,
+      trainLabels,
+      epochs = 60,
+      batch_size = 32,
+      validation_split = 0.2,
+      validation_data = list(test, testLabels))
+
+# Plot the above created model for accuracy and loss.
+plot(history)
+
+# Evaluation & Prediction - train data
+model %>% evaluate(train, trainLabels)
+pred <- model %>% predict_classes(train)
+table(Predicted = pred, Actual = trainy)
+prob <- model %>% predict_proba(train)
+cbind(prob, Predicted_class = pred, Actual = trainy)
+
+# Evaluation & Prediction - test data
+model %>% evaluate(test, testLabels)
+pred <- model %>% predict_classes(test)
+table(Predicted = pred, Actual = testy)
+
+prob <- model %>% predict_proba(test)
+cbind(prob, Predicted_class = pred, Actual = testy)
+
+# Save the created model to a json file so that it can be used in the future:
+
+model_json <- model_to_json(model)
+write_json(model_json, "CNN_Model")
+
+# Model save weights
+save_model_hdf5(model, "CNN_Model_Keras")
+save_model_weights_hdf5(model, "CNN_Model_Weights_Keras")
+
+# Set Working Directory for Training Images:
+setwd("C:/Users/Divyanshu Vats/Documents/JBM/Train/Test")
+
+# Read the Test Images
+test <- list()
+pic2 <- list.files()
+for (i in 1:length(pic2)) {test[[i]] <- readImage(pic2[i])}
+
+#Resize & combine
+str(test)
+for (i in 1:length(test)) {test[[i]] <- resize(test[[i]], 100, 100)}
+
+str(test)
+test <- combine(test)
+test <- aperm(test, c(4, 1, 2, 3))
+str(test)
+
+#v Predict the class of the images
+pred <- model %>% predict_classes(test)
+
+# Increment the class by 1 
+
+pred <- pred + 1
+
+for(i in 1:length(pred))
+{
+  switch(pred[i], )
+  print(pred[i])
+}
